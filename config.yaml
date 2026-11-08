@@ -1,0 +1,208 @@
+# =============================================================================
+# AquaLens — Master Configuration
+# =============================================================================
+# All hyperparameters, paths, and settings in one place.
+# Override at runtime via CLI args or environment variables.
+
+# ---------------------------------------------------------------------------
+# General
+# ---------------------------------------------------------------------------
+project_name: "AquaLens"
+seed: 42
+device: "auto"          # "auto" | "cuda" | "cpu"
+cpu_mode: false          # Force CPU-friendly settings (smaller images, fewer epochs)
+num_workers: 0           # DataLoader workers (0 recommended on Windows to eliminate multiprocessing overhead)
+pin_memory: true
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+  data_root: "data"
+  fish_data: "data/fish"
+  coral_data: "data/coral"
+  output_dir: "outputs"
+  checkpoint_dir: "outputs/checkpoints"
+  figures_dir: "outputs/figures"
+  gradcam_dir: "outputs/gradcam_samples"
+  logs_dir: "outputs/logs"
+  metrics_file: "outputs/metrics.json"
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+data:
+  # Kaggle dataset slugs
+  fish_dataset_slug: "crowai/large-scale-fish-dataset"
+  coral_dataset_slug: "sonainjamil/coral-reef-bleaching-dataset"
+
+  # Split ratios
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+  # CPU-friendly subset (used when cpu_mode: true)
+  cpu_subset_per_class: 50     # images per class in CPU mode
+
+  # Image sizes
+  image_size_gpu: 224
+  image_size_cpu: 128
+
+# ---------------------------------------------------------------------------
+# Preprocessing
+# ---------------------------------------------------------------------------
+preprocessing:
+  # Dark Channel Prior parameters
+  dark_channel:
+    patch_size: 15           # Ω(x) window size for dark channel computation
+    omega: 0.95              # haze removal strength (0 = no removal, 1 = full)
+    t_min: 0.1               # minimum transmission to avoid division-by-zero artifacts
+    guided_filter_radius: 60 # radius for guided filter refinement of transmission map
+    guided_filter_eps: 0.001 # regularization for guided filter
+
+  # CLAHE parameters
+  clahe:
+    clip_limit: 3.0          # contrast limiting threshold
+    tile_grid_size: [8, 8]   # number of tiles in row × column
+
+  # Normalization (ImageNet stats)
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+
+# ---------------------------------------------------------------------------
+# Augmentation
+# ---------------------------------------------------------------------------
+augmentation:
+  horizontal_flip_p: 0.5
+  vertical_flip_p: 0.2
+  rotation_degrees: 20
+  brightness: 0.3
+  contrast: 0.3
+  saturation: 0.2
+  hue: 0.1
+  # Simulated underwater degradation
+  underwater_color_cast_p: 0.3
+  underwater_turbidity_p: 0.2
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
+model:
+  backbone: "resnet34"
+  pretrained: true
+  # Progressive unfreezing: list of (epoch, unfreeze_from_layer) pairs
+  # layer names: "layer1", "layer2", "layer3", "layer4", "fc"
+  unfreeze_schedule:
+    0: ["fc"]                  # Epoch 0: train only the classifier head
+    3: ["layer4", "fc"]        # Epoch 3: unfreeze layer4
+    6: ["layer3", "layer4", "fc"]
+    10: "all"                  # Epoch 10: unfreeze everything
+  dropout: 0.3
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
+training:
+  # GPU settings
+  batch_size_gpu: 32
+  epochs_gpu: 30
+  # CPU settings (overridden when cpu_mode: true)
+  batch_size_cpu: 16
+  epochs_cpu: 5
+
+  optimizer: "adamw"
+  learning_rate: 0.001
+  weight_decay: 0.01
+
+  # LR Scheduler
+  scheduler: "onecycle"       # "onecycle" | "cosine"
+  max_lr: 0.01                # for OneCycleLR
+  pct_start: 0.3              # for OneCycleLR
+
+  # Mixed precision (GPU only)
+  mixed_precision: true
+
+  # Early stopping
+  early_stopping:
+    patience: 7
+    min_delta: 0.001
+    monitor: "val_loss"
+
+  # Class imbalance handling
+  use_weighted_sampler: true
+
+# ---------------------------------------------------------------------------
+# Evaluation
+# ---------------------------------------------------------------------------
+evaluation:
+  top_k_accuracy: [1, 3]
+  compute_roc_auc: true
+  confusion_matrix: true
+
+# ---------------------------------------------------------------------------
+# Grad-CAM
+# ---------------------------------------------------------------------------
+gradcam:
+  target_layer: "layer4"      # ResNet layer to compute Grad-CAM on
+  num_samples: 20             # number of samples to visualize
+  alpha: 0.5                  # heatmap overlay transparency
+
+# ---------------------------------------------------------------------------
+# Severity Scoring (heuristic)
+# ---------------------------------------------------------------------------
+severity:
+  # Thresholds for bleaching severity based on pale/white pixel fraction
+  # in the Grad-CAM-highlighted region
+  thresholds:
+    healthy: 0.15       # < 15% pale pixels → Healthy
+    mild: 0.35          # 15–35% → Mild Bleaching
+    moderate: 0.60      # 35–60% → Moderate Bleaching
+    # > 60% → Severe Bleaching
+
+  # HSV thresholds for "pale/white" pixel detection
+  pale_pixel:
+    min_value: 180       # V channel minimum (0-255)
+    max_saturation: 50   # S channel maximum (0-255)
+
+# ---------------------------------------------------------------------------
+# Ablation Study
+# ---------------------------------------------------------------------------
+ablation:
+  variants:
+    - name: "raw"
+      dark_channel: false
+      clahe: false
+    - name: "clahe_only"
+      dark_channel: false
+      clahe: true
+    - name: "dcp_only"
+      dark_channel: true
+      clahe: false
+    - name: "dcp_clahe"
+      dark_channel: true
+      clahe: true
+
+# ---------------------------------------------------------------------------
+# Web App
+# ---------------------------------------------------------------------------
+app:
+  host: "0.0.0.0"
+  port: 8501
+  max_upload_size_mb: 10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+export:
+  onnx: true
+  onnx_opset: 13
+  benchmark_iterations: 100
+
+# ---------------------------------------------------------------------------
+# Test-Time Augmentation (optional)
+# ---------------------------------------------------------------------------
+tta:
+  enabled: false
+  transforms: ["original", "hflip", "vflip", "rotate90"]
+

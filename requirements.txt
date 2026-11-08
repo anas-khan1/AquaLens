@@ -1,0 +1,55 @@
+# =============================================================================
+# Marine Reef Vision — Pinned Dependencies
+# =============================================================================
+# Install: pip install -r requirements.txt
+# Tested with Python 3.9–3.11
+
+# Core ML
+torch==2.1.2
+torchvision==0.16.2
+timm==0.9.12
+
+# Image processing
+opencv-python-headless==4.9.0.80
+Pillow==10.2.0
+scikit-image==0.22.0
+
+# Data & metrics
+numpy==1.26.3
+pandas==2.1.5
+scikit-learn==1.4.0
+scipy==1.12.0
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.1
+
+# Configuration
+PyYAML==6.0.1
+omegaconf==2.3.0
+
+# Web app
+streamlit==1.30.0
+
+# Experiment tracking
+tensorboard==2.15.1
+
+# ONNX export
+onnx==1.15.0
+onnxruntime==1.16.3
+
+# Testing
+pytest==7.4.4
+pytest-cov==4.1.0
+
+# Dataset download
+kaggle==1.6.3
+
+# Notebook
+jupyter==1.0.0
+ipywidgets==8.1.1
+
+# Misc
+tqdm==4.66.1
+tabulate==0.9.0
+

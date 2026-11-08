@@ -1,0 +1,52 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Large Model Weights (exceeds GitHub 100MB limit)
+# Note: Keep directory structure with .gitkeep
+outputs/checkpoints/*.pth
+outputs/checkpoints/*.pt
+outputs/checkpoints/*.onnx
+!outputs/checkpoints/.gitkeep
+
+# Dataset Images (Large binary assets)
+data/fish/**/*
+data/coral/**/*
+!data/fish/.gitkeep
+!data/coral/.gitkeep
+
+# Generated Outputs & Temporary Files
+outputs/figures/*.png
+outputs/gradcam_samples/**/*
+outputs/logs/*.csv
+outputs/*.csv
+outputs/*.json
+!outputs/figures/.gitkeep
+!outputs/gradcam_samples/.gitkeep
+!outputs/logs/.gitkeep
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
